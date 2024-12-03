@@ -5,13 +5,12 @@
 #include "terrain.h"
 
 
-Terrain::Terrain(const TERRAIN_TYPE terrain_type, const BIOME biome_type,
+Terrain::Terrain(const TERRAIN_TYPE terrain_type,
                  const uint texture_index, int position[2]): Object(texture_index, position) {
     tags[0] = TERRAIN;
     tags[1] = OWNER_WORLD;
     tags[2] = INDESTRUCTIBLE;
     type = terrain_type;
-    biome = biome_type;
 
     occupied = false;
 }
