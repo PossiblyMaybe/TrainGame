@@ -18,14 +18,14 @@ class Object {
 public:
     OBJ_TAGS tags[3]{};
 
-    explicit Object(uint texture_index, int position[2]);
+    explicit Object(uint texture_index, float position[2]);
 
     void set_texture(int new_texture);
 
-    void set_position(const int new_pos[2]);
+    void set_position(const float new_pos[2]);
 
 protected:
-    int position[2]{};
+    float position[2]{};
     uint tex_index{};
 };
 

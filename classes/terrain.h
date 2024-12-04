@@ -21,7 +21,7 @@ public:
 
     explicit Terrain(TERRAIN_TYPE terrain_type = TERRAIN_NULL,
                      uint texture_index = 0,
-                     int position[2] = nullptr);
+                     float position[2] = nullptr);
 };
 
 #endif //TERRAIN_H

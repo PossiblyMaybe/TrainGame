@@ -15,10 +15,10 @@ enum BIOME:int {
 
 class Chunk {
 public:
-    Terrain tiles[10][10];
-    int pos[2]{};
+    Terrain tiles[8][8];
+    float pos[2]{};
     BIOME biome{};
-    Chunk(const int position[2],BIOME);
+    Chunk(const float position[2],BIOME);
     ~Chunk();
 };
 
@@ -34,7 +34,8 @@ public:
     ~WorldMap();
 
     void get_adjacent_points(const uint current[2],uint adjacents[6][2]) const;
-
+private:
+    void fill_chunks();
 };
 
 

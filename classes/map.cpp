@@ -5,15 +5,15 @@
 #include "map.h"
 #include <random>
 
-Chunk::Chunk(const int position[2]=nullptr, const BIOME chunk_biome = BIOME_NULL) {
+Chunk::Chunk(const float position[2]=nullptr, const BIOME chunk_biome = BIOME_NULL) {
     int i, j;
     if (position != nullptr) {
         pos[0] = position[0];
         pos[1] = position[1];
     }
     biome = chunk_biome;
-    for (i = 0; i < 10; ++i) {
-        for (j = 0; j < 10; ++j) {
+    for (i = 0; i < 8; ++i) {
+        for (j = 0; j < 8; ++j) {
             tiles[i][j] = Terrain();
         }
     }
@@ -26,7 +26,8 @@ WorldMap::WorldMap(const int gen_seed, const int map_size) {
     seed = gen_seed;
     size = map_size;
 
-    int i, j, pos[2];
+    int i, j;
+    float pos[2];
     map = new Chunk *[size * size];
     for(i=0;i<size;++i) {
         map[i] = new Chunk[size];
@@ -35,12 +36,12 @@ WorldMap::WorldMap(const int gen_seed, const int map_size) {
     std::mt19937 gen(seed * size);
 
     int interval[] = {BIOME_MOUNTAIN, BIOME_PLAIN};
-    double weights[] = {0.1, 0.9};
+    float weights[] = {0.1, 0.9};
     std::piecewise_constant_distribution<> dist(std::begin(interval), std::end(interval), weights);
     for (i = 0; i < size; i+=2) {
-        for (j =0; j < size; j+=2) {
-            pos[0] = i;
-            pos[1] = j;
+        for (j =1; j < size; j+=2) {
+            pos[0] = static_cast<float>(i);
+            pos[1] = static_cast<float>(j);
             map[i][j] = Chunk(pos,static_cast<BIOME>(dist(gen)));
         }
     }
@@ -71,4 +72,8 @@ void WorldMap::get_adjacent_points(const uint current[2], uint adjacents[6][2]) 
         adjacents[2][0] = current[0];
         adjacents[2][1] = current[1] + 1;
     }
+}
+
+void WorldMap::fill_chunks() {
+
 }
