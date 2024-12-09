@@ -11,6 +11,14 @@ include_directories(${SFML_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 include_directories(${ASSIMP_INCLUDE_DIRS})
 
 add_executable(TrainGame main.cpp
+        classes/shading.cpp
+        classes/shading.h
+        classes/objects.cpp
+        classes/objects.h
+        classes/files.cpp
+        classes/files.h
+        classes/camera.cpp
+        classes/camera.h
 )
 
 target_link_libraries(TrainGame sfml-window sfml-system ${OPENGL_LIBRARIES} ${ASSIMP_LIBRARIES})
