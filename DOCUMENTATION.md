@@ -9,7 +9,7 @@ This is the documentation for my train game I'm working on:
 I'll try and keep it up to date, and as the project progesses this will
 get more detailed and (hopefully) useful
 
-### Legal Things
+## Legal Things
 
 Assimp is used to import the game's .obj files, and im not entirely sure
 how to include the entire assimp source in the source for the game, so I
