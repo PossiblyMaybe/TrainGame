@@ -1,5 +1,5 @@
 
-## Introduction
+# Introduction
 
 This is the documentation for my train game I'm working on:
 * A: So I don't forgot how it works
@@ -9,8 +9,9 @@ This is the documentation for my train game I'm working on:
 I'll try and keep it up to date, and as the project progesses this will
 get more detailed and (hopefully) useful
 
-## Legal Things
+# Legal Things
 
+## Open Asset Import Library (assimp)
 Assimp is used to import the game's .obj files, and im not entirely sure
 how to include the entire assimp source in the source for the game, so I
 decided to create a documentation for the game and include this as an 
@@ -82,7 +83,20 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-## Code
+# LearnOpenGL
+I used https://learnopengl.com to learn opengl, basing some of the classes in here off code from there, I'm never using this commerically, this is just a fun little project so I can learn graphics programming and game design.
 
-I nuked all the previous classes so I could just focus on getting rendering to work
-and it's just causing me pain
+# Code
+
+## Classes
+
+### Shader
+Public:
+- ID: The id of the shader program for OpenGL
+- Shader(): Constructor method, takes either nothing or paths to the vertex and fragment shaders
+- use(): sets the program as the current shader program OpenGL will use
+- addTransformationMatrix(): adds a uniform transformation matrix, takes glm::mat4 and the name of the uniform in the shader
+
+Private:
+- checkCompilationErr(): Checks if there were any errors compiling the shaders
+- readSource(): reads the source file for the shader code and loads it for compilation
