@@ -8,11 +8,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
-constexpr int SMALL = 8;
-constexpr int MEDIUM = 30;
-constexpr int LARGE = 40;
-std::filesystem::path a;
+//0.785398
+constexpr float camYaw = 0.0f;
+constexpr float camPitch = 1.5708;
+constexpr glm::vec3 world_up = glm::vec3(0.0f, 0.0f, 1.0f);
+//0.70710678
+constexpr glm::vec3 cam_left = glm::vec3(1.0f, 0.0f, 0.0f);
 
 std::filesystem::path findInstallDir() {
     std::filesystem::path cwd, check_dir;
@@ -26,11 +29,9 @@ std::filesystem::path findInstallDir() {
     return check_dir;
 }
 
-
 void shader_compilation(uint shaderProgram, const char *vShaderFile, const char *fShaderFile) {
     std::filesystem::path shader_dir, vShaderPath, fShaderPath;
     uint vShader, fShader;
-    std::stringstream sstr;
     int success;
     char infoLog[512];
     const char *vSource, *fSource;
@@ -100,8 +101,38 @@ void shader_compilation(uint shaderProgram, const char *vShaderFile, const char 
     glDeleteShader(fShader);
 }
 
+glm::mat4 composeViewMatrix() {
+    using namespace glm;
+    mat4 camera, viewMatrix;
+    vec3 camPosition, camTarget;
+    camPosition = vec3(0, 0, 1);
+    camTarget = vec3(0, 0, 0);
+    viewMatrix = lookAt(camPosition, camTarget, world_up);
+    return viewMatrix;
+}
+glm::mat4 createMVP() {
+    using namespace glm;
+    mat4 MVP, modelMatrix, viewMatrix, projectionMatrix;
+    modelMatrix = mat4(1.0f);
+    viewMatrix = mat4(1.0f);
+    projectionMatrix = mat4(1.0f);
+    viewMatrix = composeViewMatrix();
+    projectionMatrix = perspective(glm::radians(180.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+    MVP = projectionMatrix * viewMatrix * modelMatrix;
+    return MVP;
+}
+
+void applyModelMatrix(const uint shader, const glm::vec3 position) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = translate(model,position);
+    model = glm::mat4(1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(shader,"model"),1,GL_FALSE,&model[0][0]);
+}
 
 int main() {
+    uint shaderProgram;
+    int MatrixID,i;
+    glm::mat4 MVP;
     //OpenGL Context setup
     sf::ContextSettings settings;
     settings.depthBits = 24;
@@ -115,21 +146,21 @@ int main() {
     window.setVerticalSyncEnabled(true);
 
     //OpenGL setup and testing
-    uint shaderProgram = glCreateProgram();
+    shaderProgram = glCreateProgram();
     shader_compilation(shaderProgram, "vertexShaderSource.vert", "fragmentShaderSource.frag");
-
+    glUseProgram(shaderProgram);
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
-        0.5f, 0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        -0.5f, 0.5f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
     };
-    unsigned int VBO, VAO, EBO;
+
+    uint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
@@ -143,18 +174,28 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glm::mat4 viewMatrix,projectionMatrix,modelMatrix;
+    //viewMatrix = composeViewMatrix();
+    //projectionMatrix = glm::perspective(glm::radians(180.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+
+    viewMatrix = glm::mat4(1.0f);
+    projectionMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::mat4(1.0f);
+    std::cout << glm::to_string(projectionMatrix*viewMatrix*modelMatrix) << std::endl;
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_FALSE,&viewMatrix[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_FALSE,&projectionMatrix[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_FALSE,&modelMatrix[0][0]);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
-
-
     // uncomment this call to draw in wireframe polygons.
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
     //game loop
+    std::cout << glGetError() << std::endl;
     while (window.isOpen()) {
         sf::Event event{};
         while (window.pollEvent(event)) {
@@ -164,13 +205,11 @@ int main() {
                 glViewport(0, 0, static_cast<int>(event.size.width), static_cast<int>(event.size.height));
             }
         }
-
-
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArraysInstanced(GL_QUADS, 0, 4, 2);
+        glDrawArrays(GL_QUADS,0,4);
+
 
         window.display();
     }
