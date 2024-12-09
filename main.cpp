@@ -174,11 +174,14 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-
-    glm::mat4 viewMatrix,projectionMatrix,modelMatrix;
     //viewMatrix = composeViewMatrix();
     //projectionMatrix = glm::perspective(glm::radians(180.0f), 4.0f / 3.0f, 0.1f, 100.0f);
 
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glBindVertexArray(0);
+
+    glm::mat4 viewMatrix,projectionMatrix,modelMatrix;
     viewMatrix = glm::mat4(1.0f);
     projectionMatrix = glm::mat4(1.0f);
     modelMatrix = glm::mat4(1.0f);
@@ -187,11 +190,8 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_FALSE,&projectionMatrix[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_FALSE,&modelMatrix[0][0]);
 
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
     // uncomment this call to draw in wireframe polygons.
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
     //game loop
