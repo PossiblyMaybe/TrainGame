@@ -9,7 +9,7 @@ This is the documentation for my train game I'm working on:
 I'll try and keep it up to date, and as the project progesses this will
 get more detailed and (hopefully) useful
 
-### Legal Things
+## Legal Things
 
 Assimp is used to import the game's .obj files, and im not entirely sure
 how to include the entire assimp source in the source for the game, so I
@@ -84,21 +84,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Code
 
-
-### Classes
-
-#### Chunk
-An 8x8 grid of tiles, which will be rendered if the chunk is judged to
-be in clip space, also governs biome generation and bridging between 
-different biome types.
-
-#### World
-Essentially an array containing all the chunks that make up the world, governs
-map generation too
-
-#### Terrain
-A single tile in the world essentially, inherits from object
-
-#### Object
-Base class for all objects in the game, contains an index for a .obj file in a lookup
-I am yet to create as of this edit.
+I nuked all the previous classes so I could just focus on getting rendering to work
+and it's just causing me pain
