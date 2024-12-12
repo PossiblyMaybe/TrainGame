@@ -11,12 +11,21 @@
 
 class Camera {
 public:
-    Camera();
-    glm::mat4 composeViewMatrix() const;
-private:
     glm::vec3 pos{};
+    explicit Camera(glm::vec3 position,float width, float aspect_ratio);
+    Camera();
+
+    void set_vel(bool up, bool down, bool left, bool right);
+
+    void move();
+    void zoom(float scrollDelta);
+    [[nodiscard]] glm::mat4 composeViewMatrix() const;
+    [[nodiscard]] glm::mat4 composeProjectionMatrix() const;
+private:
     glm::vec3 vel{};
-    glm::vec3 accel{};
+    float width{};
+    float aspect_ratio{};
+    float max_zoom{};
 };
 
 
