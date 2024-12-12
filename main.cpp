@@ -17,12 +17,41 @@ Shader createShaderProgram(const char *vShaderFile, const char *fShaderFile) {
     return {Shader(vShaderPath, fShaderPath)};
 };
 
+int findCirclePoints(const glm::vec3 centre, const int r, glm::vec3 latticePoints[]) {
+    int x, y, index, r2;
+    glm::vec3 point, center;
+    center = glm::vec3(static_cast<int>(centre.x), static_cast<int>(centre.y), static_cast<int>(centre.z));
+    r2 = r * r;
+    x = r;
+    y = 0;
+    index = 0;
+    while (x > 0 || y < r) {
+        if (x * x + y * y >= r2) {
+            --x;
+            y = 0;
+        } else {
+            point = glm::vec3(x, 0, y);
+            latticePoints[index] = center + point;
+            point = glm::vec3(x, 0, -y);
+            latticePoints[index + 1] = center + point;
+            point = glm::vec3(-x, 0, y);
+            latticePoints[index + 2] = center + point;
+            point = glm::vec3(-x, 0, -y);
+            latticePoints[index + 3] = center + point;
+            ++y;
+            index += 4;
+        }
+    }
+    return index;
+}
+
+
 int main() {
     Shader shaderProgram;
     Camera camera;
     glm::mat4 viewMatrix, projectionMatrix, modelMatrix;
     bool up, down, left, right, shiftKeyPressed;
-
+    int tileCount;
     //OpenGL Context setup
     sf::ContextSettings settings;
     settings.depthBits = 24;
@@ -36,28 +65,25 @@ int main() {
     window.setVerticalSyncEnabled(true);
 
     //---------------------------"Mesh" for testing purposes---------------------
-    unsigned int VAO, VBO, offsetVBO;
+    unsigned int VAO, VBO, tilePositionsVBO;
     float vertices[] = {
         -0.5f, 0.0f, -0.5f,
         -0.5f, 0.0f, 0.5f,
         0.5f, 0.0f, 0.5f,
         0.5f, 0.0f, -0.5f
     };
-    int i,j,index;
-    glm::vec3 offsets[10000];
-    index = 0;
-    for (i=-50;i<50;++i) {
-        for (j=-50;j<50;++j) {
-            offsets[index] = glm::vec3(static_cast<float>(i),0.0f,static_cast<float>(j));
-            ++index;
-        }
-    }
 
-    glGenBuffers(1, &offsetVBO);
+    //CAMERA
+    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), 5.0f, 1920.0f / 1080.0f);
+
+    glm::vec3 offsets[3 * 70 * 70];
+    tileCount = findCirclePoints(camera.pos, camera.viewRadius, offsets);
+
+    glGenBuffers(1, &tilePositionsVBO);
 
 
-    glBindBuffer(GL_ARRAY_BUFFER, offsetVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(offsets), &offsets[0],GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*tileCount, &offsets[0],GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
@@ -73,7 +99,7 @@ int main() {
 
 
     glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, offsetVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
     glVertexAttribPointer(1, 3,GL_FLOAT,GL_FALSE, sizeof(float) * 3, nullptr);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glVertexAttribDivisor(1, 1);
@@ -93,8 +119,6 @@ int main() {
     // constant matrices
     modelMatrix = glm::mat4(1.0f);
 
-    //CAMERA
-    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), 5.0f, 1920.0f / 1080.0f);
     // ------------------ GAME LOOP ---------------------
     up = down = left = right = shiftKeyPressed = false;
     while (window.isOpen()) {
@@ -163,6 +187,12 @@ int main() {
         // ----------------------------------MOVEMENT--------------------------------
         camera.set_vel(up, down, left, right);
         camera.move();
+        // -----------------------------------VIEW-----------------------------------
+        tileCount = findCirclePoints(camera.pos, camera.viewRadius, offsets);
+        glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*tileCount, &offsets[0],GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
         // -------------------------TRANSLATION MATRIX CREATION----------------------
         projectionMatrix = camera.composeProjectionMatrix();
         viewMatrix = camera.composeViewMatrix();
@@ -173,7 +203,7 @@ int main() {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBindVertexArray(VAO);
-        glDrawArraysInstanced(GL_QUADS, 0, 4, sizeof(offsets)/sizeof(glm::vec3));
+        glDrawArraysInstanced(GL_QUADS, 0, 4, sizeof(offsets) / sizeof(glm::vec3));
         window.display();
     }
     return 0;

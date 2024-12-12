@@ -3,10 +3,7 @@
 //
 
 #include "camera.h"
-#include "camera.h"
-#include "camera.h"
 
-#include <iostream>
 
 // ------------------------CONSTRUCTORS-------------------------
 Camera::Camera(glm::vec3 position,float width, float aspect_ratio) {
@@ -15,6 +12,7 @@ Camera::Camera(glm::vec3 position,float width, float aspect_ratio) {
     this->width = width;
     this->max_zoom = 4*width;
     this->aspect_ratio = aspect_ratio;
+    this->viewRadius = 20;
 }
 
 Camera::Camera() = default;
@@ -29,10 +27,10 @@ void Camera::set_vel(bool up, bool down, bool left, bool right) {
         vel += vec3(-0.1f, 0.0f, -0.1f);
     }
     if (left) {
-        vel += vec3(-0.1, 0.0f, 0.1f);
+        vel += vec3(0.1, 0.0f, -0.1f);
     }
     if (right) {
-        vel += vec3(0.1f, 0.0f, -0.1f);
+        vel += vec3(-0.1f, 0.0f, 0.1f);
     }
     if (up || down || left || right) {
         vel = normalize(vel);
@@ -55,6 +53,12 @@ void Camera::zoom(const float scrollDelta) {
     } else if (width > max_zoom) {
         width = max_zoom;
     }
+    viewRadius = static_cast<int>(width)*3+5;
+    if (viewRadius<5) {
+        viewRadius = 5;
+    } else if (viewRadius > 65) {
+        viewRadius = 65;
+    }
 }
 
 //-------------------------MATRIX MAKERS
@@ -71,6 +75,5 @@ glm::mat4 Camera::composeViewMatrix() const {
 glm::mat4 Camera::composeProjectionMatrix() const {
     float height;
     height = width*aspect_ratio;
-    std::cout << aspect_ratio << " "<< width << " " << height <<std::endl;
     return glm::ortho(-width, width, -height, height, 0.1f, 1000.0f);
 }

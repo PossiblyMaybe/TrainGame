@@ -12,6 +12,7 @@
 class Camera {
 public:
     glm::vec3 pos{};
+    int viewRadius{};
     explicit Camera(glm::vec3 position,float width, float aspect_ratio);
     Camera();
 
