@@ -1,0 +1,43 @@
+Things required of world
+mountains
+rivers
+seas
+lakes
+
+Possible solution:
+Use noise to generate a basic height map
+Apply some algorithm to "smooth" said map
+Designate different land formations based on steepness and height
+designate biomes
+use areas from high points to low points to generate rivers and lakes
+clean
+
+
+
+generate Perlin Noise height map based on a random seed
+smooth via matrix convolution or other smoothing technique (possible gpu algorithm to speed things up??)
+
+designate different areas by range of heights (such as low/mid/high or something)
+find steepness of areas to determine gradient of terrain (make it discrete like an integer scale from 0 to 10 or something, 10 being sheer cliff, 0 being flat)
+
+depending on gradient in an area, determine geography type (mountain, plateau, plain, etc) (not a clue how to do this)
+
+create oceans based on height map
+generate divers based on height map
+
+using original seed Pick a line for the sun to travel, pick a strength for the sun.
+Based on strength and line of the sun choose hot and cold areas for the world
+
+Do current simulation based on temperature (not a clue)
+Pick a direction for the prevailing wind, do some form of simulation to figure out how the wind will flow
+
+Use windflow,river location/size and ocean currents to create a humidity map
+Use windflow, humidity and temperature to create a climate map
+using the climate map and geography map create a biome map.
+
+Generate world based on biome map and the original random seed
+
+3 things to store the world.
+Store tiles
+Store seed, store biome map.
+Biome map essentially contains the locations and sizes of all the different biomes in the world, which is easier said than done all things considered
