@@ -7,6 +7,9 @@
 #include "classes/shading.h"
 #include "classes/objects.h"
 #include "classes/camera.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "classes/OpenSimplexNoise.h"
+#include "libraries/stb_image.h"
 
 Shader createShaderProgram(const char *vShaderFile, const char *fShaderFile) {
     std::filesystem::__cxx11::path shader_dir, vShaderPath, fShaderPath;
@@ -47,11 +50,12 @@ int findCirclePoints(const glm::vec3 centre, const int r, glm::vec3 latticePoint
 
 
 int main() {
+    OpenSimplexNoise::Noise *simplexNoiseGen;
     Shader shaderProgram;
     Camera camera;
     glm::mat4 viewMatrix, projectionMatrix, modelMatrix;
     bool up, down, left, right, shiftKeyPressed;
-    int tileCount;
+    int tileCount, seed = 1001;
     //OpenGL Context setup
     sf::ContextSettings settings;
     settings.depthBits = 24;
@@ -65,12 +69,14 @@ int main() {
     window.setVerticalSyncEnabled(true);
 
     //---------------------------"Mesh" for testing purposes---------------------
-    unsigned int VAO, VBO, tilePositionsVBO;
+    unsigned int VAO, VBO, tilePositionsVBO, texture;
+    int width, height, nrChannels;
+    unsigned char *data;
     float vertices[] = {
-        -0.5f, 0.0f, -0.5f,
-        -0.5f, 0.0f, 0.5f,
-        0.5f, 0.0f, 0.5f,
-        0.5f, 0.0f, -0.5f
+        -0.5f, 0.0f, -0.5f, 0.0f, 0.0f,
+        -0.5f, 0.0f, 0.5f, 0.0f, 1.0f,
+        0.5f, 0.0f, 0.5f, 1.0f, 1.0f,
+        0.5f, 0.0f, -0.5f, 1.0f, 0.0f
     };
 
     //CAMERA
@@ -79,15 +85,20 @@ int main() {
     glm::vec3 offsets[3 * 70 * 70];
     tileCount = findCirclePoints(camera.pos, camera.viewRadius, offsets);
 
+
+    //TESTING FUCKERY
     glGenBuffers(1, &tilePositionsVBO);
 
 
     glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*tileCount, &offsets[0],GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * tileCount, &offsets[0],GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    data = stbi_load((findInstallDir() / "Textures" / "32x32_grass.png").c_str(), &width, &height, &nrChannels, 0);
+    std::cout << (findInstallDir()/ "Textures"/"32x32_grass.png").c_str()<<std::endl;
 
     glGenBuffers(1, &VBO);
+    glGenTextures(1, &texture);
     glGenVertexArrays(1, &VAO);
 
     glBindVertexArray(VAO);
@@ -95,18 +106,30 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0],GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE, 5 * sizeof(float), nullptr);
 
-
-    glEnableVertexAttribArray(1);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0,GL_RGB,GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "TEXTURE ISSUE" << std::endl;
+    }
+    stbi_image_free(data);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2,GL_FLOAT,GL_FALSE, 5 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(3);
     glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
-    glVertexAttribPointer(1, 3,GL_FLOAT,GL_FALSE, sizeof(float) * 3, nullptr);
+    glVertexAttribPointer(3, 3,GL_FLOAT,GL_FALSE, sizeof(float) * 3, nullptr);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(3, 1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
 
     // ---------------------------SHADER PROGRAM CREATION------------------------
     shaderProgram = createShaderProgram("vertexShaderSource.vert", "fragmentShaderSource.frag");
@@ -114,11 +137,14 @@ int main() {
 
 
     // uncomment to get wireframe
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // constant matrices
     modelMatrix = glm::mat4(1.0f);
 
+    simplexNoiseGen = new OpenSimplexNoise::Noise(seed);
+    double test = simplexNoiseGen->eval(1,0);
+    std::cout << test << std::endl;
     // ------------------ GAME LOOP ---------------------
     up = down = left = right = shiftKeyPressed = false;
     while (window.isOpen()) {
@@ -190,7 +216,7 @@ int main() {
         // -----------------------------------VIEW-----------------------------------
         tileCount = findCirclePoints(camera.pos, camera.viewRadius, offsets);
         glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*tileCount, &offsets[0],GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * tileCount, &offsets[0],GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // -------------------------TRANSLATION MATRIX CREATION----------------------
@@ -202,6 +228,7 @@ int main() {
         shaderProgram.addTransformationMatrix(projectionMatrix, "projection");
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindTexture(GL_TEXTURE_2D,texture);
         glBindVertexArray(VAO);
         glDrawArraysInstanced(GL_QUADS, 0, 4, sizeof(offsets) / sizeof(glm::vec3));
         window.display();

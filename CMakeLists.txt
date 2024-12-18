@@ -19,6 +19,10 @@ add_executable(TrainGame main.cpp
         classes/files.h
         classes/camera.cpp
         classes/camera.h
+        libraries/stb_image.h
+        classes/OpenSimplexNoise.cpp
+        mapgen.cpp
+        mapgen.h
 )
 
 target_link_libraries(TrainGame sfml-window sfml-system ${OPENGL_LIBRARIES} ${ASSIMP_LIBRARIES})
