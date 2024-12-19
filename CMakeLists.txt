@@ -20,7 +20,6 @@ add_executable(TrainGame main.cpp
         classes/camera.cpp
         classes/camera.h
         libraries/stb_image.h
-        classes/OpenSimplexNoise.cpp
         mapgen.cpp
         mapgen.h
 )

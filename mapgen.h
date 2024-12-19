@@ -4,8 +4,24 @@
 
 #ifndef MAPGEN_H
 #define MAPGEN_H
-#include "classes/OpenSimplexNoise.h"
-#include
+
+struct SolarData {
+    int strength;
+    float cancer;
+    float capricorn;
+};
+
+class WorldMap {
+public:
+    int seed;
+    explicit WorldMap(int seed);
+    ~WorldMap();
+private:
+    SolarData *sun;
+    void genSunData();
+};
+
+
 
 
 #endif //MAPGEN_H

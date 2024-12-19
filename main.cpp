@@ -8,7 +8,6 @@
 #include "classes/objects.h"
 #include "classes/camera.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "classes/OpenSimplexNoise.h"
 #include "libraries/stb_image.h"
 
 Shader createShaderProgram(const char *vShaderFile, const char *fShaderFile) {
@@ -50,7 +49,6 @@ int findCirclePoints(const glm::vec3 centre, const int r, glm::vec3 latticePoint
 
 
 int main() {
-    OpenSimplexNoise::Noise *simplexNoiseGen;
     Shader shaderProgram;
     Camera camera;
     glm::mat4 viewMatrix, projectionMatrix, modelMatrix;
@@ -142,9 +140,7 @@ int main() {
     // constant matrices
     modelMatrix = glm::mat4(1.0f);
 
-    simplexNoiseGen = new OpenSimplexNoise::Noise(seed);
-    double test = simplexNoiseGen->eval(1,0);
-    std::cout << test << std::endl;
+
     // ------------------ GAME LOOP ---------------------
     up = down = left = right = shiftKeyPressed = false;
     while (window.isOpen()) {
@@ -226,6 +222,8 @@ int main() {
         shaderProgram.addTransformationMatrix(modelMatrix, "model");
         shaderProgram.addTransformationMatrix(viewMatrix, "view");
         shaderProgram.addTransformationMatrix(projectionMatrix, "projection");
+
+        // ---------------------------------DRAWING----------------------------------
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBindTexture(GL_TEXTURE_2D,texture);
