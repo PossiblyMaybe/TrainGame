@@ -22,8 +22,7 @@ Game I made for learning OpenGL, more into can be found in DOCUMENTATION
 #include "objects.h"
 
 
-
-void importMesh(const std::filesystem::__cxx11::path& filePath, std::vector<Vertex> &vertices,
+void importMesh(const std::filesystem::__cxx11::path &filePath, std::vector<Vertex> &vertices,
                 std::vector<unsigned int> &indices, std::vector<Texture> &textures) {
     using namespace std;
     ifstream objFile(filePath);
@@ -42,44 +41,46 @@ void importMesh(const std::filesystem::__cxx11::path& filePath, std::vector<Vert
         if (currentLine[0] == 'f') {
             tempStr = currentLine.substr(2);
             tempStrs1 = strSplit(tempStr, ' ');
-            for (i=0;i<tempStrs1.size();++i) {
-
-                tempStrs2 = strSplit(tempStrs1[i],'/');
+            for (i = 0; i < tempStrs1.size(); ++i) {
+                tempStrs2 = strSplit(tempStrs1[i], '/');
 
                 indices.push_back(stoi(tempStrs2[0]));
-                vertices[stoi(tempStrs2[0])-1].normal =allNormals[stoi(tempStrs2[2])-1];
-                vertices[stoi(tempStrs2[0])-1].position =allVertices[stoi(tempStrs2[0])-1];
+                vertices[stoi(tempStrs2[0]) - 1].normal = allNormals[stoi(tempStrs2[2]) - 1];
+                vertices[stoi(tempStrs2[0]) - 1].position = allVertices[stoi(tempStrs2[0]) - 1];
                 if (!(tempStrs2[1].empty())) {
-                    vertices[stoi(tempStrs2[0])-1].texCoord = allTextures[stoi(tempStrs2[1])-1];
+                    vertices[stoi(tempStrs2[0]) - 1].texCoord = allTextures[stoi(tempStrs2[1]) - 1];
                 }
             }
         } else if (currentLine[0] == 'v') {
             if (currentLine[1] == ' ') {
                 tempStr = currentLine.substr(2);
                 tempStrs1 = strSplit(tempStr, ' ');
-                allVertices.emplace_back(stof(tempStrs1[0]),stof(tempStrs1[1]),stof(tempStrs1[2]));
+                allVertices.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]), stof(tempStrs1[2]));
                 vertices.emplace_back();
             }
             if (currentLine[1] == 'n') {
                 tempStr = currentLine.substr(3);
                 tempStrs1 = strSplit(tempStr, ' ');
-                allNormals.emplace_back(stof(tempStrs1[0]),stof(tempStrs1[1]),stof(tempStrs1[2]));
+                allNormals.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]), stof(tempStrs1[2]));
             }
             if (currentLine[1] == 't') {
                 tempStr = currentLine.substr(3);
                 tempStrs1 = strSplit(tempStr, ' ');
-                allTextures.emplace_back(stof(tempStrs1[0]),stof(tempStrs1[1]));
+                allTextures.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]));
             }
         }
-
     }
 }
 
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
-    this->vertices = std::move(vertices);
-    this->indices = std::move(indices);
-    this->textures = std::move(textures);
+Mesh::Mesh(const std::filesystem::__cxx11::path& fileName) {
+    std::filesystem::__cxx11::path filePath;
+    vertices = {};
+    indices = {};
+    textures = {};
+
+    filePath = findInstallDir() / fileName;
+    importMesh(filePath,vertices,indices,textures);
 }
 
 void Mesh::loadMesh() {

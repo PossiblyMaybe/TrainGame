@@ -37,13 +37,16 @@ struct Vertex {
     glm::vec3 normal;
     glm::vec2 texCoord;
 };
+
 // LeanOpenGL texture
 struct Texture {
     unsigned int ID;
     std::string type;
 };
 
-void importMesh(const std::filesystem::__cxx11::path& filePath,std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::vector<Texture> &textures);
+// TODO: Possibly reformat this so importMesh is a function of Mesh or returns a Mesh object, but for now I cba
+void importMesh(const std::filesystem::__cxx11::path &filePath, std::vector<Vertex> &vertices,
+                std::vector<unsigned int> &indices, std::vector<Texture> &textures);
 
 // Based on LeanOpenGL's mesh class
 class Mesh {
@@ -51,15 +54,19 @@ public :
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+
+    explicit Mesh(const std::filesystem::__cxx11::path &fileName);
+
 private:
     unsigned int VAO{}, VBO{}, EBO{};
+
     void loadMesh();
 };
 
 class Object {
 public:
     Mesh meshID;
+
     Object();
 };
 
