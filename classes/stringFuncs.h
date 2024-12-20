@@ -1,5 +1,5 @@
 /*
-Game I made for learning OpenGL, more into can be found in DOCUMENTATION
+    Game I made for learning OpenGL, more into can be found in DOCUMENTATION
     If anyone stumbles across this code and wants to use parts that I wrote go ahead, just follow AGPL :)
     Parts that have been adapted from other people have been marked as such.
 
@@ -18,27 +18,29 @@ Game I made for learning OpenGL, more into can be found in DOCUMENTATION
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#ifndef MAPGEN_H
-#define MAPGEN_H
-#include "classes/objects.h"
 
-struct SolarData {
-    int strength;
-    float cancer;
-    float capricorn;
-};
-
-class WorldMap {
-public:
-    int seed;
-    explicit WorldMap(int seed);
-    ~WorldMap();
-private:
-    SolarData *sun;
-    void genSunData();
-};
+#ifndef STRINGFUNCS_H
+#define STRINGFUNCS_H
+#include <string>
+#include <vector>
 
 
+// This is code found here:
+// https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
+// I added the namespace as it's something I prefer doing but that's the only change I made
+
+inline std::vector<std::string> strSplit(const std::string &s, char delim) {
+    using namespace std;
+    vector<string> result;
+    stringstream ss(s);
+    string item;
+
+    while (getline(ss, item, delim)) {
+        result.push_back(item);
+    }
+
+    return result;
+}
 
 
-#endif //MAPGEN_H
+#endif //STRINGFUNCS_H

@@ -1,31 +1,80 @@
-//
-// Created by will on 09/12/24.
-//
+/*
+Game I made for learning OpenGL, more into can be found in DOCUMENTATION
+    If anyone stumbles across this code and wants to use parts that I wrote go ahead, just follow AGPL :)
+    Parts that have been adapted from other people have been marked as such.
+
+    Copyright (C) 2024  William Steven
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 #include "objects.h"
 
 
-struct Vertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec3 texCoord;
-};
 
-struct Texture {
-    unsigned int ID;
-    std::string type;
-};
+void importMesh(const std::filesystem::__cxx11::path& filePath, std::vector<Vertex> &vertices,
+                std::vector<unsigned int> &indices, std::vector<Texture> &textures) {
+    using namespace std;
+    ifstream objFile(filePath);
+    vector<glm::vec3> allVertices, allNormals;
+    vector<glm::vec2> allTextures;
+    vector<string> strVertices, tempStrs1, tempStrs2;
+    string currentLine, tempStr;
+    int i;
 
-const aiScene *getScene() {
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(findInstallDir() / "untitled.obj",
-                                             aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices |
-                                             aiProcess_SortByPType | aiProcess_Triangulate);
-    if (scene == nullptr) {
-        std::cerr << importer.GetErrorString() << std::endl;
+    if (!objFile.is_open()) {
+        cerr << "Could not read file: " << filePath << ". FIle not found." << std::endl;
     }
-    return scene;
+
+    while (!objFile.eof()) {
+        getline(objFile, currentLine);
+        if (currentLine[0] == 'f') {
+            tempStr = currentLine.substr(2);
+            tempStrs1 = strSplit(tempStr, ' ');
+            for (i=0;i<tempStrs1.size();++i) {
+
+                tempStrs2 = strSplit(tempStrs1[i],'/');
+
+                indices.push_back(stoi(tempStrs2[0]));
+                vertices[stoi(tempStrs2[0])-1].normal =allNormals[stoi(tempStrs2[2])-1];
+                vertices[stoi(tempStrs2[0])-1].position =allVertices[stoi(tempStrs2[0])-1];
+                if (!(tempStrs2[1].empty())) {
+                    vertices[stoi(tempStrs2[0])-1].texCoord = allTextures[stoi(tempStrs2[1])-1];
+                }
+            }
+        } else if (currentLine[0] == 'v') {
+            if (currentLine[1] == ' ') {
+                tempStr = currentLine.substr(2);
+                tempStrs1 = strSplit(tempStr, ' ');
+                allVertices.emplace_back(stof(tempStrs1[0]),stof(tempStrs1[1]),stof(tempStrs1[2]));
+                vertices.emplace_back();
+            }
+            if (currentLine[1] == 'n') {
+                tempStr = currentLine.substr(3);
+                tempStrs1 = strSplit(tempStr, ' ');
+                allNormals.emplace_back(stof(tempStrs1[0]),stof(tempStrs1[1]),stof(tempStrs1[2]));
+            }
+            if (currentLine[1] == 't') {
+                tempStr = currentLine.substr(3);
+                tempStrs1 = strSplit(tempStr, ' ');
+                allTextures.emplace_back(stof(tempStrs1[0]),stof(tempStrs1[1]));
+            }
+        }
+
+    }
 }
+
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
     this->vertices = std::move(vertices);
@@ -53,8 +102,8 @@ void Mesh::loadMesh() {
                           reinterpret_cast<void *>(offsetof(Vertex, normal)));
 
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,2*sizeof(float),
-                          reinterpret_cast<void *>(offsetof(Vertex,texCoord)));
+    glVertexAttribPointer(2, 2,GL_FLOAT,GL_FALSE, 2 * sizeof(float),
+                          reinterpret_cast<void *>(offsetof(Vertex, texCoord)));
 
     glBindVertexArray(0);
 }
