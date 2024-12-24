@@ -32,8 +32,6 @@ Game I made for learning OpenGL, more into can be found in DOCUMENTATION
 #include "libraries/stb_image.h"
 
 
-
-
 Shader createShaderProgram(const char *vShaderFile, const char *fShaderFile) {
     std::filesystem::__cxx11::path shader_dir, vShaderPath, fShaderPath;
     shader_dir = findInstallDir() / "Shaders";
@@ -109,23 +107,18 @@ int main() {
 
 
     //TESTING FUCKERY
-    glGenBuffers(1, &tilePositionsVBO);
+    std::vector<unsigned int> testIDs = {0};
+    Mesh testMesh = Mesh("untitled.obj");
 
+    glGenBuffers(1, &tilePositionsVBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, tilePositionsVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * tileCount, &offsets[0],GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     data = stbi_load((findInstallDir() / "Textures" / "32x32_grass.png").c_str(), &width, &height, &nrChannels, 0);
-    std::cout << (findInstallDir()/ "Textures"/"32x32_grass.png").c_str()<<std::endl;
+    std::cout << (findInstallDir() / "Textures" / "32x32_grass.png").c_str() << std::endl;
 
-    std::vector<Vertex> test1 = {};
-    std::vector<unsigned int> test2 = {};
-    std::vector<Texture> test3 = {};
-
-    importMesh((findInstallDir()/"untitled.obj"),test1,test2,test3);
-
-    for (auto &a :test1) std::cout<<glm::to_string(a.position)<<std::endl;
 
     glGenBuffers(1, &VBO);
     glGenTextures(1, &texture);
@@ -258,9 +251,10 @@ int main() {
         // ---------------------------------DRAWING----------------------------------
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glBindTexture(GL_TEXTURE_2D,texture);
-        glBindVertexArray(VAO);
-        glDrawArraysInstanced(GL_QUADS, 0, 4, sizeof(offsets) / sizeof(glm::vec3));
+        //glBindTexture(GL_TEXTURE_2D, texture);
+        //glBindVertexArray(VAO);
+        //glDrawArraysInstanced(GL_QUADS, 0, 4, sizeof(offsets) / sizeof(glm::vec3));
+        testMesh.drawMesh();
         window.display();
     }
     return 0;

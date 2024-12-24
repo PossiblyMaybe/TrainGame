@@ -31,36 +31,28 @@ Game I made for learning OpenGL, more into can be found in DOCUMENTATION
 #include "stringFuncs.h"
 #include <glm/glm.hpp>
 
-// LeanOpenGL vertex, I just renamed a variable
-struct Vertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 texCoord;
-};
 
-// LeanOpenGL texture
-struct Texture {
-    unsigned int ID;
-    std::string type;
-};
-
-// TODO: Possibly reformat this so importMesh is a function of Mesh or returns a Mesh object, but for now I cba
-void importMesh(const std::filesystem::__cxx11::path &filePath, std::vector<Vertex> &vertices,
-                std::vector<unsigned int> &indices, std::vector<Texture> &textures);
-
-// Based on LeanOpenGL's mesh class
+// Originally based on LearnOpenGL's mesh class, so im crediting it as inspiration
 class Mesh {
 public :
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
+    unsigned int texCurrent{};
 
-    explicit Mesh(const std::filesystem::__cxx11::path &fileName);
+    explicit Mesh(const char *fileName, const std::vector<unsigned int> &texIDs = std::vector<unsigned int>(1));
 
-private:
-    unsigned int VAO{}, VBO{}, EBO{};
+    void setTexture(unsigned int ID);
 
-    void loadMesh();
+    void drawMesh();
+
+    void drawMeshInstanced(const std::vector<glm::vec3> &offsets);
+
+protected:
+    unsigned int VAO{}, VBOs[4]{}, EBO{};
+    std::vector<glm::vec3> vectorNormals;
+    std::vector<glm::vec3> posVertex;
+    std::vector<glm::vec2> posUV;
+    std::vector<unsigned int> indexFaces;
+
+    bool importMesh(std::filesystem::__cxx11::path &filepath);
 };
 
 class Object {

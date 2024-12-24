@@ -22,18 +22,15 @@ Game I made for learning OpenGL, more into can be found in DOCUMENTATION
 #include "objects.h"
 
 
-void importMesh(const std::filesystem::__cxx11::path &filePath, std::vector<Vertex> &vertices,
-                std::vector<unsigned int> &indices, std::vector<Texture> &textures) {
+bool Mesh::importMesh(std::filesystem::__cxx11::path &filePath) {
     using namespace std;
     ifstream objFile(filePath);
-    vector<glm::vec3> allVertices, allNormals;
-    vector<glm::vec2> allTextures;
-    vector<string> strVertices, tempStrs1, tempStrs2;
     string currentLine, tempStr;
+    vector<string> tempStrs1, tempStrs2;
     int i;
 
     if (!objFile.is_open()) {
-        cerr << "Could not read file: " << filePath << ". FIle not found." << std::endl;
+        return false;
     }
 
     while (!objFile.eof()) {
@@ -44,67 +41,105 @@ void importMesh(const std::filesystem::__cxx11::path &filePath, std::vector<Vert
             for (i = 0; i < tempStrs1.size(); ++i) {
                 tempStrs2 = strSplit(tempStrs1[i], '/');
 
-                indices.push_back(stoi(tempStrs2[0]));
-                vertices[stoi(tempStrs2[0]) - 1].normal = allNormals[stoi(tempStrs2[2]) - 1];
-                vertices[stoi(tempStrs2[0]) - 1].position = allVertices[stoi(tempStrs2[0]) - 1];
-                if (!(tempStrs2[1].empty())) {
-                    vertices[stoi(tempStrs2[0]) - 1].texCoord = allTextures[stoi(tempStrs2[1]) - 1];
-                }
+                indexFaces.emplace_back(stoi(tempStrs2[0]) - 1);
+                // if (!(tempStrs2[1].empty())) {
+                //     vertices[stoi(tempStrs2[0]) - 1].texCoord = allTextures[stoi(tempStrs2[1]) - 1];
+                // }
             }
-        } else if (currentLine[0] == 'v') {
-            if (currentLine[1] == ' ') {
-                tempStr = currentLine.substr(2);
-                tempStrs1 = strSplit(tempStr, ' ');
-                allVertices.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]), stof(tempStrs1[2]));
-                vertices.emplace_back();
-            }
-            if (currentLine[1] == 'n') {
-                tempStr = currentLine.substr(3);
-                tempStrs1 = strSplit(tempStr, ' ');
-                allNormals.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]), stof(tempStrs1[2]));
-            }
-            if (currentLine[1] == 't') {
-                tempStr = currentLine.substr(3);
-                tempStrs1 = strSplit(tempStr, ' ');
-                allTextures.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]));
+        }
+        if (currentLine[0] == 'v') {
+            switch (currentLine[1]) {
+                case ' ':
+                    tempStr = currentLine.substr(2);
+                    tempStrs1 = strSplit(tempStr, ' ');
+                    posVertex.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]), stof(tempStrs1[2]));
+                    break;
+                case 'n':
+                    tempStr = currentLine.substr(3);
+                    tempStrs1 = strSplit(tempStr, ' ');
+                    vectorNormals.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]), stof(tempStrs1[2]));
+                    break;
+                case 't':
+
+                    tempStr = currentLine.substr(3);
+                    tempStrs1 = strSplit(tempStr, ' ');
+                    posUV.emplace_back(stof(tempStrs1[0]), stof(tempStrs1[1]));
+                    break;
+                default:
+                    break;
             }
         }
     }
+
+    return true;
+}
+
+void Mesh::setTexture(unsigned int ID) {
+    texCurrent = ID;
 }
 
 
-Mesh::Mesh(const std::filesystem::__cxx11::path& fileName) {
-    std::filesystem::__cxx11::path filePath;
-    vertices = {};
-    indices = {};
-    textures = {};
+Mesh::Mesh(const char *fileName, const std::vector<unsigned int> &texIDs) {
+    std::filesystem::__cxx11::path filePath, sourceDir;
+    std::vector<float> dataVBO;
+    vectorNormals = {};
+    posVertex = {};
+    posUV = {};
+    indexFaces = {};
+    sourceDir = findInstallDir();
 
-    filePath = findInstallDir() / fileName;
-    importMesh(filePath,vertices,indices,textures);
-}
+    filePath = sourceDir / "Meshes" / fileName;
+    importMesh(filePath);
 
-void Mesh::loadMesh() {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(4, &VBOs[0]);
     glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &VAO);
 
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0],GL_DYNAMIC_DRAW);
+
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0],GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexFaces.size() * sizeof(float), &indexFaces[0],GL_DYNAMIC_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+    glBufferData(GL_ARRAY_BUFFER, posVertex.size() * sizeof(float), &dataVBO[0],GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), nullptr);
 
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+    glBufferData(GL_ARRAY_BUFFER, posUV.size() * sizeof(float), &dataVBO[0],GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float),
-                          reinterpret_cast<void *>(offsetof(Vertex, normal)));
+    glVertexAttribPointer(1, 2,GL_FLOAT,GL_FALSE, 2 * sizeof(float), nullptr);
 
+    // BINDING
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
+    glBufferData(GL_ARRAY_BUFFER, vectorNormals.size() * sizeof(float), &dataVBO[0],GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2,GL_FLOAT,GL_FALSE, 2 * sizeof(float),
-                          reinterpret_cast<void *>(offsetof(Vertex, texCoord)));
+    glVertexAttribPointer(2, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), nullptr);
 
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+
+void Mesh::drawMesh() {
+    glBindVertexArray(VAO);
+    glBindTexture(GL_TEXTURE_2D,texCurrent);
+    glDrawElements(GL_TRIANGLES, indexFaces.size(),GL_UNSIGNED_INT, &indexFaces[0]);
+}
+
+
+void Mesh::drawMeshInstanced(const std::vector<glm::vec3> &offsets) {
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
+    glBufferData(GL_ARRAY_BUFFER, offsets.size() * sizeof(float), &offsets[0],GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), nullptr);
+    glVertexAttribDivisor(3, 1);
+    glBindTexture(GL_TEXTURE_2D,texCurrent);
+    glBindVertexArray(0);
+
+    glBindVertexArray(VAO);
+    glBindTexture(GL_TEXTURE_2D,texCurrent);
+    glDrawElementsInstanced(GL_TRIANGLES, indexFaces.size(),GL_UNSIGNED_INT, &indexFaces[0], offsets.size());
 }
